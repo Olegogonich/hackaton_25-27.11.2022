@@ -84,6 +84,7 @@ def back_to_start(message):
 def back(call):
     try:
         bot.edit_message_reply_markup(call.message.chat.id, call.message.id, reply_markup=None)
+        bot.answer_callback_query(call.id)
     except telebot.apihelper.ApiTelegramException:
         pass
     back_to_start(call.from_user.id)
@@ -93,8 +94,10 @@ def back(call):
 def my_requests(call):
     try:
         bot.edit_message_reply_markup(call.message.chat.id, call.message.id, reply_markup=None)
+        bot.answer_callback_query(call.id)
     except telebot.apihelper.ApiTelegramException:
         pass
+    bot.answer_callback_query(call.id)
     is_there_requests = False
     text = "Ваши заявки:\n"
     reqs = os.listdir(config.request_dir)
@@ -113,6 +116,7 @@ def my_requests(call):
 def add_equip(call):
     try:
         bot.edit_message_reply_markup(call.message.chat.id, call.message.id, reply_markup=None)
+        bot.answer_callback_query(call.id)
     except telebot.apihelper.ApiTelegramException:
         pass
     bot.send_message(call.message.chat.id, "Отлично. Введите название оборудования")
@@ -165,6 +169,7 @@ def add_equip_photo(message):
 def add_more_equip_photo(call):
     try:
         bot.edit_message_reply_markup(call.message.chat.id, call.message.id, reply_markup=None)
+        bot.answer_callback_query(call.id)
     except telebot.apihelper.ApiTelegramException:
         pass
     bot.send_message(call.message.chat.id, "Пришлите мне фото оборудования")
@@ -175,6 +180,7 @@ def add_more_equip_photo(call):
 def finish_equip(call):
     try:
         bot.edit_message_reply_markup(call.message.chat.id, call.message.id, reply_markup=None)
+        bot.answer_callback_query(call.id)
     except telebot.apihelper.ApiTelegramException:
         pass
     new_equip = new_equips[call.from_user.id]
@@ -194,6 +200,7 @@ def finish_equip(call):
 def delete_equip(call):
     try:
         bot.edit_message_reply_markup(call.message.chat.id, call.message.id, reply_markup=None)
+        bot.answer_callback_query(call.id)
     except telebot.apihelper.ApiTelegramException:
         pass
     names_list = os.listdir(config.json_dir)
@@ -211,6 +218,7 @@ def delete_equip(call):
 def equip_delete(call):
     try:
         bot.edit_message_reply_markup(call.message.chat.id, call.message.id, reply_markup=None)
+        bot.answer_callback_query(call.id)
     except telebot.apihelper.ApiTelegramException:
         pass
     name = call.data[13:]
@@ -227,6 +235,7 @@ def equip_delete(call):
 def yes_delete(call):
     try:
         bot.edit_message_reply_markup(call.message.chat.id, call.message.id, reply_markup=None)
+        bot.answer_callback_query(call.id)
     except telebot.apihelper.ApiTelegramException:
         pass
     name = call.data[4:]
@@ -243,6 +252,7 @@ def yes_delete(call):
 def no_delete(call):
     try:
         bot.edit_message_reply_markup(call.message.chat.id, call.message.id, reply_markup=None)
+        bot.answer_callback_query(call.id)
     except telebot.apihelper.ApiTelegramException:
         pass
     delete_equip(call)
@@ -252,6 +262,7 @@ def no_delete(call):
 def show_equips(call):
     try:
         bot.edit_message_reply_markup(call.message.chat.id, call.message.id, reply_markup=None)
+        bot.answer_callback_query(call.id)
     except telebot.apihelper.ApiTelegramException:
         pass
     names_list = os.listdir(config.json_dir)
@@ -271,6 +282,7 @@ def show_equips(call):
 def equip(call):
     try:
         bot.edit_message_reply_markup(call.message.chat.id, call.message.id, reply_markup=None)
+        bot.answer_callback_query(call.id)
     except telebot.apihelper.ApiTelegramException:
         pass
     name = call.data[6:]
@@ -299,6 +311,7 @@ def equip(call):
 def make_request(call):
     try:
         bot.edit_message_reply_markup(call.message.chat.id, call.message.id, reply_markup=None)
+        bot.answer_callback_query(call.id)
     except telebot.apihelper.ApiTelegramException:
         pass
     name = call.data[13:]
@@ -325,6 +338,7 @@ def make_request(call):
 def make_request_time(call):
     try:
         bot.edit_message_reply_markup(call.message.chat.id, call.message.id, reply_markup=None)
+        bot.answer_callback_query(call.id)
     except telebot.apihelper.ApiTelegramException:
         pass
     new_request = new_requests[call.from_user.id]
@@ -355,6 +369,7 @@ def make_request_time(call):
 def show_requests(call):
     try:
         bot.edit_message_reply_markup(call.message.chat.id, call.message.id, reply_markup=None)
+        bot.answer_callback_query(call.id)
     except telebot.apihelper.ApiTelegramException:
         pass
     markup = types.InlineKeyboardMarkup(row_width=2)
@@ -378,6 +393,7 @@ def show_requests(call):
 def accepted_requests(call):
     try:
         bot.edit_message_reply_markup(call.message.chat.id, call.message.id, reply_markup=None)
+        bot.answer_callback_query(call.id)
     except telebot.apihelper.ApiTelegramException:
         pass
     is_there_requests = False
@@ -399,6 +415,7 @@ def accepted_requests(call):
 def accept(call):
     try:
         bot.edit_message_reply_markup(call.message.chat.id, call.message.id, reply_markup=None)
+        bot.answer_callback_query(call.id)
     except telebot.apihelper.ApiTelegramException:
         pass
     with open(config.request_dir + '/' + call.message.text + '.json') as request_json:
@@ -424,6 +441,7 @@ def accept(call):
 def reject_comment(call):
     try:
         bot.edit_message_reply_markup(call.message.chat.id, call.message.id, reply_markup=None)
+        bot.answer_callback_query(call.id)
     except telebot.apihelper.ApiTelegramException:
         pass
     new_rejections[call.from_user.id] = call.message.text
