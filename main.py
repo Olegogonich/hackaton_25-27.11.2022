@@ -124,10 +124,14 @@ def add_equip(call):
 
 
 def add_equip_name(message):
-    if message.content_type == 'text':
+    if message.content_type == 'text' and len(message.text) <= 24:
         new_equips[message.from_user.id] = config.Equip(name=message.text)
         bot.send_message(message.chat.id, "Введите описание")
         bot.register_next_step_handler(message, add_equip_text)
+
+    elif len(message.text) > 24:
+        bot.send_message(message.chat.id, "Название слишком длинное!")
+        bot.register_next_step_handler(message, add_equip_name)
 
     else:
         bot.send_message(message.chat.id, "Нужно ввести текст!")
@@ -271,7 +275,8 @@ def show_equips(call):
         for name in names_list:
             button = types.InlineKeyboardButton(text=name[:-5], callback_data='equip_' + name)
             markup.add(button)
-        markup.add(back_button)
+        back_btn = types.InlineKeyboardButton(text="Назад", callback_data='back')
+        markup.add(back_btn)
         bot.send_message(call.message.chat.id, "Список доступного оборудования:", reply_markup=markup)
 
     else:
