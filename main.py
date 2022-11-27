@@ -67,7 +67,7 @@ def back_to_start(message):
         button4 = types.InlineKeyboardButton(text="Посмотреть новые заявки", callback_data='show_requests')
         button5 = types.InlineKeyboardButton(text="Одобренные заявки", callback_data='accepted_requests')
         markup.add(button1, button2, button3, button4, button5)
-        bot.send_message(message, "Привет. Это - меню администратора бота. Что тебя интересует?",
+        bot.send_message(message, "Привет! Это - меню администратора бота. Что тебя интересует?",
                          reply_markup=markup)
 
     else:
