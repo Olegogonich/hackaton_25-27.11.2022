@@ -6,6 +6,9 @@ import config
 
 bot = telebot.TeleBot(config.token)
 
+back_markup = types.InlineKeyboardMarkup()
+back_button = types.InlineKeyboardButton(text="Назад", callback_data='back')
+back_markup.add(back_button)
 
 new_equips = {}
 new_requests = {}
@@ -28,6 +31,7 @@ def delete_all_messages(user_id):
 
 @bot.message_handler(commands=['start'])
 def start(message):
+    bot.clear_step_handler_by_chat_id(message.chat.id)
     user_messages[message.from_user.id] = []
     user_id = message.from_user.id
     if user_id in config.admin_ids:
@@ -35,9 +39,10 @@ def start(message):
         button1 = types.InlineKeyboardButton(text="Просмотр доступного оборудования", callback_data='show_equips')
         button2 = types.InlineKeyboardButton(text="Добавить новое оборудование", callback_data='add_equip')
         button3 = types.InlineKeyboardButton(text="Удалить оборудование", callback_data='delete_equip')
-        button4 = types.InlineKeyboardButton(text="Посмотреть заявки", callback_data='show_requests')
-        markup.add(button1, button2, button3, button4)
-        bot.send_message(message.chat.id, "Привет. Это - меню администратора бота. Что тебя интересует?",
+        button4 = types.InlineKeyboardButton(text="Посмотреть новые заявки", callback_data='show_requests')
+        button5 = types.InlineKeyboardButton(text="Одобренные заявки", callback_data='accepted_requests')
+        markup.add(button1, button2, button3, button4, button5)
+        bot.send_message(message.chat.id, "Привет! Это - меню администратора бота. Что тебя интересует?",
                          reply_markup=markup)
 
     else:
@@ -50,22 +55,58 @@ def start(message):
                          reply_markup=markup)
 
 
+def back_to_start(message):
+    bot.clear_step_handler_by_chat_id(message)
+    user_messages[message] = []
+    user_id = message
+    if user_id in config.admin_ids:
+        markup = types.InlineKeyboardMarkup(row_width=1)
+        button1 = types.InlineKeyboardButton(text="Просмотр доступного оборудования", callback_data='show_equips')
+        button2 = types.InlineKeyboardButton(text="Добавить новое оборудование", callback_data='add_equip')
+        button3 = types.InlineKeyboardButton(text="Удалить оборудование", callback_data='delete_equip')
+        button4 = types.InlineKeyboardButton(text="Посмотреть новые заявки", callback_data='show_requests')
+        button5 = types.InlineKeyboardButton(text="Одобренные заявки", callback_data='accepted_requests')
+        markup.add(button1, button2, button3, button4, button5)
+        bot.send_message(message, "Привет. Это - меню администратора бота. Что тебя интересует?",
+                         reply_markup=markup)
+
+    else:
+        markup = types.InlineKeyboardMarkup(row_width=1)
+        button1 = types.InlineKeyboardButton(text="Просмотреть доступное оборудование", callback_data='show_equips')
+        button2 = types.InlineKeyboardButton(text='Мои заявки', callback_data="my_requests")
+        markup.add(button1, button2)
+        bot.send_message(message, "Привет! Я - бот, который поможет тебе забронировать "
+                                  "оборудование в лабораториях ИКТИБ. Что тебя интересует?",
+                         reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == 'back')
+def back(call):
+    try:
+        bot.edit_message_reply_markup(call.message.chat.id, call.message.id, reply_markup=None)
+    except telebot.apihelper.ApiTelegramException:
+        pass
+    back_to_start(call.from_user.id)
+
+
 @bot.callback_query_handler(func=lambda call: call.data == 'my_requests')
 def my_requests(call):
     try:
         bot.edit_message_reply_markup(call.message.chat.id, call.message.id, reply_markup=None)
     except telebot.apihelper.ApiTelegramException:
         pass
+    is_there_requests = False
+    text = "Ваши заявки:\n"
     reqs = os.listdir(config.request_dir)
-    if len(reqs) != 0:
-        text = "Ваши заявки:\n"
-        username = f"{call.from_user.first_name} {call.from_user.last_name}"
-        for req in reqs:
-            if req.find(username) == 0:
-                text += f"<b>{req[len(username) + 3:]}</b>\n"
-        bot.send_message(call.message.chat.id, text)
+    username = f"{call.from_user.first_name} {call.from_user.last_name}"
+    for req in reqs:
+        if req.find(username) == 0:
+            text += f"<b>{req[len(username) + 3:]}</b>\n"
+            is_there_requests = True
+    if is_there_requests:
+        bot.send_message(call.message.chat.id, text, reply_markup=back_markup, parse_mode='HTML')
     else:
-        bot.send_message(call.message.chat.id, "В данный момент у вас нет никаких заявок!")
+        bot.send_message(call.message.chat.id, "В данный момент у вас нет никаких заявок!", reply_markup=back_markup)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'add_equip')
@@ -145,7 +186,7 @@ def finish_equip(call):
     }
     with open(config.json_dir + '/' + new_equip.name + '.json', 'w') as new_file:
         new_file.write(json.dumps(equip_dict, indent=4))
-    bot.send_message(call.message.chat.id, "Оборудование успешно добавлено в список")
+    bot.send_message(call.message.chat.id, "Оборудование успешно добавлено в список", reply_markup=back_markup)
     new_equips.pop(call.from_user.id)
 
 
@@ -161,6 +202,7 @@ def delete_equip(call):
         for name in names_list:
             button = types.InlineKeyboardButton(text=name[:-5], callback_data='equip_delete_' + name)
             markup.add(button)
+        markup.add(back_button)
         bot.send_message(call.message.chat.id, "Как называется оборудование, которое вы хотите удалить?",
                          reply_markup=markup)
 
@@ -193,7 +235,8 @@ def yes_delete(call):
         for photo in curr_equip['photos']:
             os.remove(photo)
     os.remove(config.json_dir + '/' + name)
-    bot.send_message(call.message.chat.id, f"Оборудование <b>{name[:-5]}</b> успешно удалено", parse_mode='HTML')
+    bot.send_message(call.message.chat.id, f"Оборудование <b>{name[:-5]}</b> успешно удалено",
+                     parse_mode='HTML', reply_markup=back_markup)
 
 
 @bot.callback_query_handler(func=lambda call: call.data[:2] == 'no')
@@ -217,6 +260,7 @@ def show_equips(call):
         for name in names_list:
             button = types.InlineKeyboardButton(text=name[:-5], callback_data='equip_' + name)
             markup.add(button)
+        markup.add(back_button)
         bot.send_message(call.message.chat.id, "Список доступного оборудования:", reply_markup=markup)
 
     else:
@@ -265,14 +309,16 @@ def make_request(call):
         markup = types.InlineKeyboardMarkup(row_width=3)
         there_is_time = False
         for one_time in time:
-            if one_time != 'none':
+            if one_time in config.times:
                 button = types.InlineKeyboardButton(text=one_time, callback_data=f"time_{one_time}")
                 markup.add(button)
                 there_is_time = True
+        markup.add(back_button)
         if there_is_time:
             bot.send_message(call.message.chat.id, "Выберите удобное время", reply_markup=markup)
         else:
-            bot.send_message(call.message.chat.id, "Извините, но свободное время закончилось!")
+            bot.send_message(call.message.chat.id, "Извините, но свободное время закончилось!",
+                             reply_markup=back_markup)
 
 
 @bot.callback_query_handler(func=lambda call: call.data[:4] == 'time')
@@ -293,12 +339,15 @@ def make_request_time(call):
             'user_name': new_request.user_name,
             'user_id': new_request.user_id,
             'accepted': new_request.accepted,
-            'comment': new_request.comment
         }, indent=4))
     bot.send_message(call.message.chat.id,
-                     text=f"Заявка оформлена на {new_request.time}. Оборудование - {new_request.equip_name}")
+                     text=f"Заявка оформлена на {new_request.time}. Оборудование - {new_request.equip_name}",
+                     reply_markup=back_markup)
     for admin_id in config.admin_ids:
-        bot.send_message(admin_id, "Появилась новая заявка!")
+        markup = types.InlineKeyboardMarkup()
+        button = types.InlineKeyboardButton(text="Посмотреть заявки", callback_data='show_requests')
+        markup.add(button)
+        bot.send_message(admin_id, "Появилась новая заявка!", reply_markup=markup)
     new_requests.pop(call.from_user.id)
 
 
@@ -312,15 +361,38 @@ def show_requests(call):
     button1 = types.InlineKeyboardButton(text='Одобрить', callback_data='accept')
     button2 = types.InlineKeyboardButton(text='Отклонить', callback_data='reject')
     markup.add(button1, button2)
-    if len(os.listdir(config.request_dir)) != 0:
-        for request_name in os.listdir(config.request_dir):
-            with open(config.request_dir + '/' + request_name) as request_json:
-                request = json.loads(request_json.read())
+    is_there_requests = False
+    for request_name in os.listdir(config.request_dir):
+        with open(config.request_dir + '/' + request_name) as request_json:
+            request = json.loads(request_json.read())
+            if request['accepted'] is None:
+                is_there_requests = True
                 bot.send_message(call.message.chat.id,
                                  text=f"{request['user_name']} - {request['equip_name']} {request['time']}",
                                  reply_markup=markup)
+    if not is_there_requests:
+        bot.send_message(call.message.chat.id, "В данный момент заявок нет", reply_markup=back_markup)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == 'accepted_requests')
+def accepted_requests(call):
+    try:
+        bot.edit_message_reply_markup(call.message.chat.id, call.message.id, reply_markup=None)
+    except telebot.apihelper.ApiTelegramException:
+        pass
+    is_there_requests = False
+    text = f"Одобренные заявки:\n"
+    for request_name in os.listdir(config.request_dir):
+        with open(config.request_dir + '/' + request_name) as request_json:
+            request = json.loads(request_json.read())
+            if request['accepted']:
+                is_there_requests = True
+                text += f"{request['user_name']} - {request['equip_name']} {request['time']}"
+
+    if is_there_requests:
+        bot.send_message(call.message.chat.id, text=text, reply_markup=back_markup)
     else:
-        bot.send_message(call.message.chat.id, "В данный момент заявок нет")
+        bot.send_message(call.message.chat.id, "В данный момент заявок нет", reply_markup=back_markup)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'accept')
@@ -334,9 +406,14 @@ def accept(call):
 
         with open(config.json_dir + '/' + request['equip_name'] + '.json', 'r') as file:
             old_file = file.read()
-        new_file = old_file.replace(request['time'], 'none')
+        new_file = old_file.replace(request['time'], f"{request['time']} - {request['user_name']}")
         with open(config.json_dir + '/' + request['equip_name'] + '.json', 'w') as file:
             file.write(new_file)
+
+        request['accepted'] = True
+
+        with open(config.request_dir + '/' + call.message.text + '.json', 'w') as new_request_json:
+            new_request_json.write(json.dumps(request, indent=4))
 
         bot.send_message(chat_id=request['user_id'],
                          text=f"Ваша заявка на <b>{request['equip_name']} в {request['time']}</b> одобрена!",
@@ -358,15 +435,19 @@ def reject(message):
     name = new_rejections[message.from_user.id]
     with open(config.request_dir + '/' + name + '.json') as request_json:
         request = json.loads(request_json.read())
+        markup = types.InlineKeyboardMarkup()
+        button = types.InlineKeyboardButton(text='Связаться с администратором', url='t.me/olegogonich')
+        markup.add(button)
         bot.send_message(request['user_id'],
                          f"Ваша заявка на <b>{request['equip_name']} в {request['time']}</b> была отклонена.\n"
                          f"Причина - {message.text}",
-                         parse_mode='HTML')
+                         parse_mode='HTML',
+                         reply_markup=markup)
         os.remove(f"{config.request_dir}/{request['user_name']} - {request['equip_name']} {request['time']}.json")
     new_rejections.pop(message.from_user.id)
-    bot.send_message(message.chat.id, "Заявка отклонена")
+    bot.send_message(message.chat.id, "Заявка отклонена", reply_markup=back_markup)
 
 
 if __name__ == '__main__':
     print('bot is running')
-    bot.polling()
+    bot.infinity_polling()
