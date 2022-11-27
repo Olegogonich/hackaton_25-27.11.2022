@@ -46,7 +46,7 @@ def start(message):
                          reply_markup=markup)
 
     else:
-        markup = types.InlineKeyboardMarkup()
+        markup = types.InlineKeyboardMarkup(row_width=1)
         button1 = types.InlineKeyboardButton(text="Просмотреть доступное оборудование", callback_data='show_equips')
         button2 = types.InlineKeyboardButton(text='Мои заявки', callback_data="my_requests")
         markup.add(button1, button2)
