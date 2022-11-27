@@ -104,7 +104,7 @@ def my_requests(call):
     username = f"{call.from_user.first_name} {call.from_user.last_name}"
     for req in reqs:
         if req.find(username) == 0:
-            text += f"<b>{req[len(username) + 3:]}</b>\n"
+            text += f"<b>{req[len(username) + 3:-5]}</b>\n"
             is_there_requests = True
     if is_there_requests:
         bot.send_message(call.message.chat.id, text, reply_markup=back_markup, parse_mode='HTML')
